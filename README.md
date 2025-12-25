@@ -43,7 +43,7 @@ You can define the flow of your image generation in the `scenes` list. Want a lo
 
     "scenes": [
     {
-      "scene_id": "Scene_01_Wakuwaku",
+      "scene_id": "Scene_01_Wakeup",
       "num_images": 5,  // You can override the global count per scene
       "prompt": "waking up in bed, stretching, messy hair, morning light"
     },
