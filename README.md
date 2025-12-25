@@ -27,16 +27,37 @@ The system follows a **Draft -> Final** logic:
 | <img src="https://pimg.1px.tw/blog/gale/album/101348418/844824872680195389.png" width="400" alt="Draft Example"> | <img src="https://pimg.1px.tw/blog/gale/album/101348418/844824876677369019.png" width="400" alt="Final Example"> |
 | *Composition & pose* | *The models you like* |
 
-## 🧩 Auto Prompt Assembly
+## 🧩 Auto Prompt Assembly & Story Flow
 
 No need to write a wall of text every time! The script automatically assembles prompts from three sources:
 
     [1. Quality Tags] + [2. Character Config] + [3. Scene Description]
 
-1.  **Quality Tags (Prefix)**: Defined in settings (handles `masterpiece, best quality...`).
+1.  **Quality Tags (Prefix)**: Defined in settings/json (handles `masterpiece, best quality...`).
 2.  **Character Config (Header)**: Defined in `story.json` (handles `1girl, black hair...`).
-3.  **Scene Description**: Defined in the `scenes` list (handles actions and environment).
+3.  **Scene Description**: Defined in the `scenes` list. **This is the core workflow!**
 
+### 🎬 How to write the story
+You can define the flow of your image generation in the `scenes` list. Want a longer story? Just copy-paste the block and add more scenes!
+
+
+    "scenes": [
+    {
+      "scene_id": "Scene_01_Wakuwaku",
+      "num_images": 5,  // You can override the global count per scene
+      "prompt": "waking up in bed, stretching, messy hair, morning light"
+    },
+    {
+      "scene_id": "Scene_02_School",
+      "num_images": 5,
+      "prompt": "standing in classroom, holding a book, looking out the window"
+    },
+    {
+      "scene_id": "Scene_03_Date",
+      "prompt": "sitting in a cafe, drinking tea, smiling at viewer"
+    }
+    // (｀・ω・´)b Add as many scenes as you like! The factory never stops!
+    ]
 > **Note**: If you switch models (e.g., from Pony to SD1.5), remember to update `draft_prefix` or `final_prefix` in `story.json`. Old spells (like `score_9`) won't work on other models!
 
 ## 🚀 Getting Started
