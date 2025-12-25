@@ -33,7 +33,7 @@ No need to write a wall of text every time! The script automatically assembles p
 
     [1. Quality Tags] + [2. Character Config] + [3. Scene Description]
 
-1.  **Quality Tags (Prefix)**: Defined in settings/json (handles `masterpiece, best quality...`).
+1.  **Quality Tags (Prefix)**: Defined in settings (handles `masterpiece, best quality...`).
 2.  **Character Config (Header)**: Defined in `story.json` (handles `1girl, black hair...`).
 3.  **Scene Description**: Defined in the `scenes` list (handles actions and environment).
 
