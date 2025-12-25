@@ -18,7 +18,7 @@ The system follows a **Draft -> Final** logic:
     *   Uses the draft as a base, locks the skeleton with **ControlNet**, and performs an img2img refinement.
     *   *Recommended Models:* Aesthetic-focused models (e.g., NoobAI) to give it that polished, airy anime look.
 
-> (｀・ω・´) **Pro Tip**: The default config is `Pony (Structure)` -> `NoobAI (Aesthetics)`. This combo yields accurate anatomy with a refined art style. However, you can swap these for ANY models you like in `story.json`Check your WebUI, copy the full filename (e.g., `ponyDiffusionV6XL_v6StartWithThisOne.safetensors`), and paste it!
+> (｀・ω・´) **Pro Tip**: The default config is `Pony (Structure)` -> `NoobAI (Aesthetics)`. This combo yields accurate anatomy with a refined art style. However, you can swap these for ANY models you like in `story.json` .Check your WebUI, copy the full filename (e.g., `ponyDiffusionV6XL_v6StartWithThisOne.safetensors`), and paste it!
 
 ## 🖼️ Demo (SFW / Safe for Public Viewing -u-)
 
