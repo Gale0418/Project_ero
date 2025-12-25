@@ -25,7 +25,7 @@ The system follows a **Draft -> Final** logic:
 | Phase 1: Draft | Phase 2: Final |
 | :---: | :---: |
 | <img src="https://pimg.1px.tw/blog/gale/album/101348418/844824872680195389.png" width="400" alt="Draft Example"> | <img src="https://pimg.1px.tw/blog/gale/album/101348418/844824876677369019.png" width="400" alt="Final Example"> |
-| *Composition & pose* | *Refined details & lighting* |
+| *Composition & pose* | *The models you like* |
 
 ## 🧩 Auto Prompt Assembly
 
