@@ -86,4 +86,4 @@ Want to turn "3D photos" into "2D Waifus"? or perform a style transfer?
 > (｀・ω・´)σ **Least Important Detail**: Even this README is sponsored by AI. (X
 
 ---
-(｀・ω・´)b OMEDETOU!
+(｀・ω・´)ﾉ OMEDETOU!
