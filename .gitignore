@@ -1,0 +1,16 @@
+# Python 垃圾檔
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+
+outputs/
+inputs/
+
+.vscode/
+
+.DS_Store
+Thumbs.db

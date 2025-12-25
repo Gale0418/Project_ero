@@ -1,0 +1,48 @@
+{
+  "_desc_project": "專案名稱，會影響輸出資料夾的命名",
+  "project_name": "JKday_01",
+  
+  "_desc_models": "指定各階段使用的模型檔名 (需包含 .safetensors)",
+  "models": {
+    "draft_model": "autismmixSDXL_autismmixPony.safetensors",
+    "final_model": "noobaiXLNAIXL_vPred10Version.safetensors",
+    "controlnet_openpose": "openpose"
+  },
+
+  "_desc_remix": "Remix 模式設定。conflict_keywords 可手動指定要刪除的 Tag (如 ['hair'] )，若留空則只降低權重",
+  "remix_settings": {
+    "user_prompt_weight": 1.5,
+    "original_tags_weight": 0.5,
+    "denoising_strength": 0.6,
+    "conflict_keywords": []
+  },
+
+  "_desc_gen": "若想覆蓋 settings.py 的預設長寬，可在這裡指定",
+  "generation_settings": {
+    "draft_width": 832,
+    "draft_height": 1216,
+    "final_width": 1024,
+    "final_height": 1536
+  },
+
+  "_desc_seed": "base_seed 設為 -1 代表全隨機，否則會固定種子以利重現",
+  "seed_strategy": {
+    "global_num_images": 10,
+    "base_seed": 123456
+  },
+
+  "ad_modes": ["face", "hand", "person"],
+  "draft_loras": ["<lora:Expressive_H:0.7>"],
+  "final_loras": ["<lora:AddMicroDetails_NoobAI:0.7>"],
+
+  "_desc_header": "人物特徵的基本 Prompt，會自動加到所有場景前",
+  "character_header": "1girl, solo,(black hair, long hair, straight hair:1.2),school uniform, sailor collar,pleated skirt,miniskirt, cute face, blush, smile, delicate expression,(looking at viewer:1.2),",
+
+  "scenes": [
+    {
+      "scene_id": "Scene_01_Wakuwaku",
+      "num_images": 5,
+      "prompt": "(sitting, sitting on grass:1.2), grassy hill,(waving, one hand up, arm up:1.1),(river, water, river background:1.2),pov, summer, playful atmosphere, outdoor setting, sunlight glow,blue sky, clouds, day, nature, scenery,(upper body, dynamic close-up:1.1)"
+    }
+  ]
+}
