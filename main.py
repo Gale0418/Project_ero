@@ -52,7 +52,7 @@ def main():
     
     print(r"""
    ╔═══════════════════════════════════════════╗
-   ║   ❖ PROJECT ERO 7.0 : OPERATION START     ║
+   ║   ❖ PROJECT ERO 6.9 : OPERATION START     ║
    ║   (｀・ω・´)b  COMMAND CONSOLE ONLINE     ║
    ╚═══════════════════════════════════════════╝
     """)
