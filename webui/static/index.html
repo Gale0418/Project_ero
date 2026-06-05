@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ero - WebUI v2.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="header-title">
+                <h1>(｀・ω・´)b PROJECT ERO WEBUI v2.1</h1>
+                <p>True Story Pipeline & Multi-Mode Generation</p>
+            </div>
+            <div class="status-indicator">
+                <span id="sd-status-dot" class="dot red"></span>
+                <span id="sd-status-text">SD WebUI: Offline</span>
+            </div>
+        </header>
+
+        <!-- Top Panel: Configuration -->
+        <div class="top-panel glass-panel">
+            <div class="panel-header">
+                <h2>Task Configuration</h2>
+                
+                <div class="controls mode-tabs">
+                    <button class="mode-btn active" data-mode="standard">Standard</button>
+                    <button class="mode-btn" data-mode="twophase">Draft → Refine</button>
+                    <button class="mode-btn" data-mode="remix">Remix Style</button>
+                </div>
+
+                <div class="controls">
+                    <button class="mode-btn active" id="btn-quick" aria-pressed="true" aria-controls="expert-panel">Quick Mode</button>
+                    <button class="mode-btn" id="btn-expert" aria-pressed="false" aria-controls="expert-panel">Expert Mode</button>
+                </div>
+            </div>
+
+            <div class="template-bar">
+                <select id="template-select">
+                    <option value="">-- Load Template --</option>
+                </select>
+                <button id="btn-save-template" class="icon-btn" title="Save current prompts as template">💾 Save Template</button>
+            </div>
+
+            <form id="gen-form">
+                <!-- Mode-Specific Model Inputs -->
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label id="lbl-model">Model (Draft)</label>
+                        <select id="model" required><option value="">Loading models...</option></select>
+                    </div>
+                    
+                    <div class="form-group twophase-only hidden" style="flex: 1;">
+                        <label>Final Model (Refine)</label>
+                        <select id="final-model"><option value="">Loading models...</option></select>
+                    </div>
+
+                    <div class="form-group twophase-only remix-only hidden" style="width: 150px;">
+                        <label>Denoising Strength</label>
+                        <input type="number" id="denoise_str" value="0.5" step="0.05" min="0.0" max="1.0">
+                    </div>
+
+                    <div class="form-group" style="width: 150px;">
+                        <label for="task_name">Task Name</label>
+                        <input type="text" id="task_name" value="Task" placeholder="e.g. CyberpunkGirl" required>
+                    </div>
+
+                    <div class="form-group" style="width: 150px;">
+                        <label for="total_images">Total Images</label>
+                        <input type="number" id="total_images" value="1" min="1" max="100" required title="Total number of images to generate (will process one by one to save VRAM)">
+                    </div>
+                </div>
+                
+                <!-- Remix Image Upload -->
+                <div class="remix-only hidden">
+                    <div class="form-group">
+                        <label>Base Image for Remix</label>
+                        <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload base image for Remix mode">
+                            <span id="upload-text">Drag & Drop Image Here or Click to Browse</span>
+                            <img id="upload-preview" class="hidden">
+                            <input type="file" id="file-input" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modular Prompts -->
+                <div class="prompt-grid">
+                    <div class="form-group">
+                        <label>Global Prompt (通用)</label>
+                        <textarea id="global_prompt" rows="2" required>masterpiece, best quality, highres, cinematic lighting, vivid colors</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Character Prompt (人物/特徵)</label>
+                        <textarea id="char_prompt" rows="2" required>1girl, smile, long hair, medium breasts, (fair skin, smooth skin, water drops, clear skin:1.1)</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Action Prompt (姿勢/場景)</label>
+                        <textarea id="action_prompt" rows="2" required>looking at viewer, pov, lying, on a beautiful beach, ocean background, daytime, bright sunlight</textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Negative Prompt</label>
+                    <textarea id="negative_prompt" rows="2" required>backlighting, backlit, silhouette, sweat, sweaty, dark skin, shadows, high contrast, large breasts, thick thighs, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo, lowres, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, out of focus, censorship, old, amateur drawing, odd</textarea>
+                </div>
+
+                <!-- Expert Mode Options -->
+                <div id="expert-panel" class="hidden" aria-hidden="true">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Width</label>
+                            <input type="number" id="width" value="832" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>Height</label>
+                            <input type="number" id="height" value="1216" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>Steps</label>
+                            <input type="number" id="steps" value="28" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>CFG Scale</label>
+                            <input type="number" id="cfg_scale" value="5.0" step="0.5" required>
+                        </div>
+                        <div class="form-group half twophase-only hidden">
+                            <label>ControlNet Weight (Phase 2)</label>
+                            <input type="number" id="cn_weight" value="0.7" step="0.1" min="0.0" max="2.0">
+                        </div>
+                        <div class="form-group half">
+                            <label>Anti-Mutant Protection</label>
+                            <div class="checkbox-group" style="margin-top: 5px;">
+                                <label><input type="checkbox" id="auto_hires" checked> Auto Hires. fix</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>ADetailer (Post-processing)</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="ad_modes" value="face"> Face Repair</label>
+                            <label><input type="checkbox" name="ad_modes" value="hand"> Hand Repair</label>
+                            <label><input type="checkbox" name="ad_modes" value="person"> Full Body Enhancer</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <span class="btn-text">Enqueue Generation Task</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- Bottom Panel: Kanban Board -->
+        <div class="kanban-header" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+            <h2 style="margin: 0; color: var(--text-color);">Generation Queue</h2>
+            <button class="btn" id="btn-open-folder" style="background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">📂 Open Outputs Folder</button>
+        </div>
+        <div class="trello-board">
+            <div class="trello-col glass-panel">
+                <div class="col-header"><h3>⏳ Pending</h3><span class="badge" id="count-pending">0</span></div>
+                <div class="col-body" id="col-pending"></div>
+            </div>
+            <div class="trello-col glass-panel running-col">
+                <div class="col-header"><h3>🚀 Running</h3><span class="badge" id="count-running">0</span></div>
+                <div class="col-body" id="col-running"></div>
+            </div>
+            <div class="trello-col glass-panel">
+                <div class="col-header"><h3>✅ Completed</h3><span class="badge" id="count-completed">0</span></div>
+                <div class="col-body" id="col-completed"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="image-modal" class="modal" role="dialog" aria-modal="true" aria-label="Image preview" tabindex="-1"><span class="close-modal" role="button" tabindex="0" aria-label="Close image preview">&times;</span><img class="modal-content" id="modal-img" alt="Generated image preview"></div>
+    <div id="template-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="template-modal-title" tabindex="-1">
+        <div class="modal-content small-modal">
+            <h3 id="template-modal-title">Save Template</h3>
+            <input type="text" id="template-name" placeholder="Enter template name..." />
+            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <button class="submit-btn" id="confirm-save-template">Save</button>
+                <button class="submit-btn" style="background: var(--surface-color)" id="cancel-save-template">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

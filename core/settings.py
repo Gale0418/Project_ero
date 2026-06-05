@@ -20,10 +20,13 @@ DEFAULT_GEN_SETTINGS = {
     # 建議 SDXL/Pony 使用 832x1216 (直) 或 1216x832 (橫)
     "draft_width": 832,
     "draft_height": 1216,
+    "draft_steps": 28,
+    "draft_cfg": 5.0,
+    "draft_sampler": "Euler a",
 
-    # Phase 2: 完稿 (Final) 解析度 (建議比初稿大 1.5~2 倍)
-    "final_width": 1024,
-    "final_height": 1536,
+    # Phase 2: 完稿 (Final) 解析度。高於模型訓練 bucket 時應先 A/B 測試。
+    "final_width": 832,
+    "final_height": 1216,
 
     # 完稿階段的重繪幅度 (Denoising Strength)
     # 0.3~0.4: 微調，保留原圖細節
@@ -32,7 +35,7 @@ DEFAULT_GEN_SETTINGS = {
     "final_denoise": 0.55,
 
     # 完稿階段的提示詞相關性 (CFG Scale)
-    "final_cfg": 7.0,
+    "final_cfg": 5.0,
 
     # 迭代步數
     "steps": 28,
@@ -44,14 +47,15 @@ DEFAULT_GEN_SETTINGS = {
 # ==========================================
 # 📝 [提示詞預設模版] PS:我討厭大奶 都什麼邪教!
 # ==========================================
+# 加入最終確定的白皙水滴肌與防斷腿負面提詞！
 PROMPT_PRESETS = {
     "draft": {
-        "prefix": "masterpiece, best quality, very aesthetic, newest, absurdres, highres, ultra-detailed, intricate details, official art, anime style, cinematic lighting, warm lighting, vibrant colors, (depth of field, subtle background blur:1.2),",
-        "negative": "score_4, score_3, score_2, score_1, source_furry, large breasts, thick thighs,",
+        "prefix": "masterpiece, best quality, very aesthetic, newest, absurdres, highres, ultra-detailed, intricate details, official art, anime style, cinematic lighting, warm lighting, vibrant colors, (depth of field, subtle background blur:1.2), fair skin, smooth skin, water drops, clear skin,",
+        "negative": "backlighting, backlit, silhouette, sweat, sweaty, bodysuit, latex, bodypaint, leotard, dark skin, shadows, high contrast, large breasts, thick thighs, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo, lowres, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, out of focus, censorship, old, amateur drawing, odd",
     },
     "final": {
-        "prefix": "masterpiece, best quality, very aesthetic, newest, absurdres, highres, ultra-detailed, intricate details, official art, anime style, cinematic lighting, warm lighting, vibrant colors, (depth of field, subtle background blur:1.2), very awa,",
-        "negative": "large breasts, thick thighs, (worst quality, low quality:1.4), lowres, (bad), text, error, extra digits, extra limbs, missing limbs, bad hands, mutated hands, signature, watermark, username, old, early, jpeg artifacts, 3d, photorealistic, realistic, (dark:1.1), (shadow:1.1),",
+        "prefix": "masterpiece, best quality, very aesthetic, newest, absurdres, highres, ultra-detailed, intricate details, official art, anime style, cinematic lighting, warm lighting, vibrant colors, (depth of field, subtle background blur:1.2), fair skin, smooth skin, water drops, clear skin, very awa,",
+        "negative": "backlighting, backlit, silhouette, sweat, sweaty, bodysuit, latex, bodypaint, leotard, dark skin, shadows, high contrast, large breasts, thick thighs, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo, lowres, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, out of focus, censorship, old, amateur drawing, odd",
     },
 }
 

@@ -16,6 +16,23 @@ from core.settings import (
 from core.client import SDClient 
 from core.utils import ensure_dir, save_image, extract_infotext, smart_process_tags, OtakuSpinner, EvaText
 
+def wait_for_futures(futures):
+    for future in futures:
+        future.result()
+
+def get_next_draft_batch(draft_root, scene_id, cnt, num_imgs, max_batch):
+    next_path = draft_root / f"{scene_id}_{cnt+1:03}.png"
+    if next_path.exists():
+        return 0
+
+    batch = min(max_batch, num_imgs - cnt)
+    while batch > 1:
+        batch_paths = [draft_root / f"{scene_id}_{i:03}.png" for i in range(cnt + 1, cnt + batch + 1)]
+        if not any(path.exists() for path in batch_paths):
+            break
+        batch -= 1
+    return batch
+
 class SystemScanner:
     def __init__(self):
         self.vram_gb = 8.0 
@@ -66,6 +83,7 @@ def main():
         
     gen_opts = {**DEFAULT_GEN_SETTINGS, **story.get("generation_settings", {})}
     models = story.get("models", {})
+    story_refine_mode = story.get("story_refine_mode", "controlnet_txt2img")
     seed_strategy = story.get("seed_strategy", {})
     global_num = seed_strategy.get("global_num_images", 2)
     base_seed = seed_strategy.get("base_seed", -1)
@@ -111,6 +129,26 @@ def main():
         return
     
     io_executor = ThreadPoolExecutor(max_workers=opt['save_workers'])
+    save_futures = []
+    draft_save_futures = []
+    executor_stopped = False
+
+    def stop_executor():
+        nonlocal executor_stopped
+        if not executor_stopped:
+            io_executor.shutdown(wait=True)
+            executor_stopped = True
+
+    def finish_pending_saves():
+        stop_executor()
+        wait_for_futures(save_futures)
+
+    def required_model(key):
+        model_name = models.get(key)
+        if not model_name:
+            EvaText.print_alert(f"CRITICAL ERROR: Missing models.{key} in story.json")
+            return None
+        return model_name
 
     def format_lora(items):
         res = ""
@@ -155,7 +193,9 @@ def main():
 
         ensure_dir(remix_root)
         print(f"{EvaText.CYAN}<<< UNIT-FINAL EMERGENCY LAUNCH >>>{EvaText.ENDC}")
-        if not sd.set_model(models["final_model"]):
+        final_model = required_model("final_model")
+        if not final_model or not sd.set_model(final_model):
+            finish_pending_saves()
             return
 
         prefix = story.get('final_prefix', PROMPT_PRESETS['final']['prefix'])
@@ -182,7 +222,7 @@ def main():
                     resp = sd.img2img(
                         init_image_b64=init_img_b64, prompt=full_prompt, negative_prompt=negative,
                         width=orig_w, height=orig_h, steps=gen_opts["steps"],
-                        cfg=gen_opts["final_cfg"], denoising_strength=remix_denoise,
+                        cfg_scale=gen_opts["final_cfg"], denoising_strength=remix_denoise,
                         sampler_name=gen_opts["sampler"], use_dt=story.get("use_dt", True),
                         adetailer_args=ad_args, controlnet_name=models.get("controlnet_openpose", None),
                         controlnet_img=init_img_b64,
@@ -193,7 +233,7 @@ def main():
                 info = extract_infotext(resp.get("info", ""))
                 if imgs:
                     save_name = f"Remix_{img_path.stem}.png"
-                    io_executor.submit(save_image, imgs[0], remix_root / save_name, info)
+                    save_futures.append(io_executor.submit(save_image, imgs[0], remix_root / save_name, info))
             except Exception as e:
                 print(f"\n{EvaText.FAIL}❌ IMPACT FAILED: {e}{EvaText.ENDC}")
             pbar.update(1)
@@ -213,7 +253,9 @@ def main():
         print(f"{EvaText.CYAN}└────────────────────────────────────────────────────────────┘{EvaText.ENDC}")
         
         print(f"{EvaText.CYAN}<<< UNIT-01 LAUNCH >>>{EvaText.ENDC}")
-        if not sd.set_model(models["draft_model"]):
+        draft_model = required_model("draft_model")
+        if not draft_model or not sd.set_model(draft_model):
+            finish_pending_saves()
             return
 
         scenes = story.get("scenes", [])
@@ -230,31 +272,36 @@ def main():
             pbar = tqdm(total=num_imgs, desc=scene_id[:8], bar_format=bar_fmt, ncols=120, leave=True)
             cnt = 0
             while cnt < num_imgs:
-                batch = min(opt['batch_size'], num_imgs - cnt)
-                target_filename = f"{scene_id}_{cnt+batch:03}.png"
-                if (draft_root / target_filename).exists():
-                    pbar.update(batch)
-                    cnt += batch
+                batch = get_next_draft_batch(draft_root, scene_id, cnt, num_imgs, opt['batch_size'])
+                if batch == 0:
+                    pbar.update(1)
+                    cnt += 1
                     continue
-                
+
                 current_seed = scene_seed_start + cnt if scene_seed_start != -1 else -1
 
                 with OtakuSpinner(" COMPILING KINETIC VECTORS...") as _:
                     resp = sd.txt2img(
                         prompt=prompt, negative_prompt=negative, seed=current_seed,
-                        steps=20, width=gen_opts["draft_width"], height=gen_opts["draft_height"],
-                        batch_size=batch, cfg=7, sampler_name="Euler a"
+                        steps=gen_opts["draft_steps"], width=gen_opts["draft_width"], height=gen_opts["draft_height"],
+                        batch_size=batch, cfg_scale=gen_opts["draft_cfg"], sampler_name=gen_opts["draft_sampler"]
                     )
                 
                 imgs = resp.get("images", [])
+                if len(imgs) != batch:
+                    raise RuntimeError(f"Draft generation returned {len(imgs)} image(s); expected {batch}.")
                 info = extract_infotext(resp.get("info", ""))
                 for idx, b64 in enumerate(imgs):
                     fname = f"{scene_id}_{cnt+idx+1:03}.png"
-                    io_executor.submit(save_image, b64, draft_root / fname, info)
+                    future = io_executor.submit(save_image, b64, draft_root / fname, info)
+                    save_futures.append(future)
+                    draft_save_futures.append(future)
                 
                 cnt += batch
                 pbar.update(batch)
             pbar.close()
+
+        wait_for_futures(draft_save_futures)
 
         print(f"\n{EvaText.WARNING}[SYSTEM] ENTROPY CASCADE IMMINENT.{EvaText.ENDC}")
         print(f"{EvaText.WARNING}[SYSTEM] ENGAGING REFINEMENT PROTOCOL.{EvaText.ENDC}")
@@ -267,7 +314,9 @@ def main():
         print(f"{EvaText.CYAN}<<< UNIT-02 LAUNCH >>>{EvaText.ENDC}")
         
         # 修正: 斷行處理
-        if not sd.set_model(models["final_model"]):
+        final_model = required_model("final_model")
+        if not final_model or not sd.set_model(final_model):
+            finish_pending_saves()
             return
 
         ad_keys = story.get("ad_modes", story.get("active_adetailers", ["face"]))
@@ -297,25 +346,35 @@ def main():
                     init_img = base64.b64encode(f.read()).decode()
 
                 with OtakuSpinner(f" #{i+1} REWRITING HISTORY LOGS...") as _:
-                    resp = sd.img2img(
-                        init_image_b64=init_img, prompt=prompt, negative_prompt=negative, seed=current_seed,
-                        width=gen_opts["final_width"], height=gen_opts["final_height"],
-                        steps=gen_opts["steps"], cfg=gen_opts["final_cfg"],
-                        denoising_strength=gen_opts["final_denoise"], sampler_name=gen_opts["sampler"],
-                        use_dt=story.get("use_dt", True), adetailer_args=ad_args,
-                        controlnet_name=models.get("controlnet_openpose", None), controlnet_img=init_img,
-                        cn_weight=CN_CONFIG_STORY["weight"], cn_end=CN_CONFIG_STORY["guidance_end"]
-                    )
+                    common_args = {
+                        "prompt": prompt, "negative_prompt": negative, "seed": current_seed,
+                        "width": gen_opts["final_width"], "height": gen_opts["final_height"],
+                        "steps": gen_opts["steps"], "cfg_scale": gen_opts["final_cfg"],
+                        "sampler_name": gen_opts["sampler"], "use_dt": story.get("use_dt", True),
+                        "adetailer_args": ad_args, "controlnet_name": models.get("controlnet_openpose", None),
+                        "controlnet_img": init_img, "cn_weight": CN_CONFIG_STORY["weight"],
+                        "cn_end": CN_CONFIG_STORY["guidance_end"],
+                    }
+                    if story_refine_mode == "controlnet_txt2img":
+                        resp = sd.txt2img(**common_args)
+                    elif story_refine_mode == "img2img":
+                        resp = sd.img2img(
+                            init_image_b64=init_img,
+                            denoising_strength=gen_opts["final_denoise"],
+                            **common_args,
+                        )
+                    else:
+                        raise ValueError(f"Unknown story_refine_mode: {story_refine_mode}")
                 
                 imgs = resp.get("images", [])
                 info = extract_infotext(resp.get("info", ""))
                 if imgs: 
-                    io_executor.submit(save_image, imgs[0], dst, info)
+                    save_futures.append(io_executor.submit(save_image, imgs[0], dst, info))
                 pbar.update(1)
             pbar.close()
 
     EvaText.print_system("SAVING BATTLE DATA...")
-    io_executor.shutdown(wait=True)
+    finish_pending_saves()
     elapsed = time.time() - start_time
     m, s = divmod(elapsed, 60)
     

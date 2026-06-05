@@ -13,6 +13,14 @@ from core.settings import SPINNER_EMOJIS, GLOBAL_TAG_BLACKLIST, TAG_CONFLICT_MAP
 
 os.system('')
 
+def configure_utf8_console():
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure:
+            reconfigure(encoding="utf-8", errors="replace")
+
+configure_utf8_console()
+
 class EvaText:
     HEADER = '\033[95m'
     BLUE = '\033[94m'
@@ -87,6 +95,7 @@ def extract_infotext(response_info):
 
 def save_image(image_base64, path, info_text=None):
     try:
+        ensure_dir(Path(path).parent)
         img_data = base64.b64decode(image_base64)
         img = Image.open(BytesIO(img_data))
         pnginfo = PngImagePlugin.PngInfo()
@@ -94,7 +103,9 @@ def save_image(image_base64, path, info_text=None):
             pnginfo.add_text("parameters", info_text)
         img.save(path, pnginfo=pnginfo)
     except Exception as e:
-        print(f"{EvaText.FAIL}❌ LOGIC GATE COLLAPSE (SAVE ERROR): {e}{EvaText.ENDC}")
+        if "unittest" not in sys.modules:
+            print(f"{EvaText.FAIL}❌ LOGIC GATE COLLAPSE (SAVE ERROR): {e}{EvaText.ENDC}")
+        raise
 
 def smart_process_tags(scanned_tags_str, user_prompt, weight, blocked_list=None):
     if not scanned_tags_str:

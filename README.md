@@ -108,3 +108,50 @@ Want to turn "3D photos" into "2D Waifus"? or perform a style transfer?
 
 ---
 (｀・ω・´)ﾉ OMEDETOU!
+
+---
+
+## 🖥️ WebUI v2.1 Desktop Control Panel
+
+Project Ero now includes a local FastAPI WebUI for controlling SD WebUI from a desktop browser without manually clicking through every batch.
+
+### Start the WebUI
+
+```powershell
+.\start_webui.ps1
+```
+
+or:
+
+```bat
+start_webui.bat
+```
+
+By default, the WebUI binds to `127.0.0.1:8000` so it only accepts local connections. If you intentionally want to expose it on your LAN, set `PROJECT_ERO_HOST` before starting it.
+
+### WebUI features
+
+*   **Standard mode**: enqueue direct txt2img jobs with automatic hires-fix safety for large resolutions.
+*   **Draft → Refine mode**: generate quick drafts, then refine with ControlNet pose guidance and a final model.
+*   **Remix mode**: upload a base image, interrogate tags, filter conflicting traits, then repaint with the target character prompt.
+*   **Queue board**: view Pending, Running, and Completed jobs in a Trello-like board.
+*   **History recovery**: interrupted Pending/Running jobs are marked as failed after server restart instead of silently resuming stale work.
+*   **Prompt templates**: save and reload reusable prompt sets.
+*   **PNG metadata**: generated PNGs keep the WebUI infotext in the standard `parameters` field for later manual refinement.
+
+### Verification
+
+Run these checks before publishing or relying on a new setup:
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+python -m py_compile main.py core/client.py core/utils.py core/settings.py webui/app.py webui/job_history.py
+node --check webui/static/js/main.js
+python tools/verify_webui_assets.py
+```
+
+`verify_webui_assets.py` expects SD WebUI to be running at `http://127.0.0.1:7860` with the API enabled and the required checkpoint, ControlNet, and ADetailer models installed.
+
+### Model and license notes
+
+The maintained commercial baseline is Animagine XL 4.0 Opt with reviewed helper assets. The optional WAI Illustrious checkpoint is included as a local A/B testing path only until a paid-release license audit is complete. See [`MODEL_NOTES.md`](MODEL_NOTES.md) before using generated assets in paid releases.
